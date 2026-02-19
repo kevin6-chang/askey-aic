@@ -1,0 +1,11 @@
+NOW=`date +%s`
+echo $NOW
+echo ovsh U Node_Config -w module==SSHM -w key==sshAccessControl persist:=true value:=\'true\'
+ovsh U Node_Config -w module==SSHM -w key==sshAccessControl persist:=true value:=\'true\'
+echo ovsh U Node_Config -w module==SSHM -w key==sshAuthPasswd persist:=true value:=\'123456\'
+ovsh U Node_Config -w module==SSHM -w key==sshAuthPasswd persist:=true value:=\'123456\'
+echo ovsh U Node_Config -w module==SSHM -w key==sshTotalSessTimeout persist:=true value:=\'7200\'
+ovsh U Node_Config -w module==SSHM -w key==sshTotalSessTimeout persist:=true value:=\'7200\'
+echo ovsh U Node_Config -w module==SSHM -w key==sshEnableTime value:=\'$NOW\'
+ovsh U Node_Config -w module==SSHM -w key==sshEnableTime value:=\'$NOW\'
+

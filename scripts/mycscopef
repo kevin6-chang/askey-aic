@@ -1,0 +1,12 @@
+#!/bin/bash -f 
+set -x
+find -P . \
+-path "./openwrt/sdk/qsdk/staging_dir" -prune -o \
+\( -name "*.[ch]" -o -name "*.cpp" -o -name "*.py" -o  -name "*.sh" \) -type f > cscope.files
+
+#-path "./openwrt/sdk/qsdk/staging_dir" -prune -o \
+
+find -P . \
+-path "./feeds/scp/feed/coss/kevin-coss-package-test" -prune -o \
+-path "./openwrt/sdk/qsdk/staging_dir" -prune -o \
+-path "*/etc/init.d/*" -type f >> cscope.files
