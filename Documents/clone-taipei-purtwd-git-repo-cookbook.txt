@@ -1,0 +1,298 @@
+Original Author
+===============
+Kevin(Chingwei) Chang
+
+Version
+=======
+1.2
+
+Revison History
+================
+1.0 Initial version by Kevin + Ethan + Gavin study result
+1.1 1. Practiced it at north USA slow link
+    2. Cleaned typo, added time and space budget 
+    3  Added clone_taipei_git.sh
+    Author: Kevin Chang
+1.2 Added .gitmodules transformed content 
+    Added subdirectory traversal to feeds/scp/feed/coss
+    - check Makefile for SCP_COSS_VERSION branch name version/5.4.0
+    - The clone logic for coss-package.git 
+    - Added clone_coss_submodule.sh (Appendix 4)
+    Author: Kevin Chang
+
+Summary
+=======
+This document targets at users who deploys Ubuntu Linux machine 24.04 to clone git repo residing at https://bitbucket.askey.com.tw:8443/projects/PURTWD.
+
+Document Circulation Scope
+==========================
+Internal only
+
+Problem Definition
+==================
+1. There are two company git repos for CCO project: Taipei and CT. Below is their manifest as of 11/17/2025.
+
+  * Taipei https://bitbucket.askey.com.tw:8443
+    - Worldwide accessible via company VPN, DNS address resolved at 10.1.6.85. Its system adm is Ethan.
+    - Coupled with builder machine at 10.1.27.240(no DNS), administrated by Angus. 
+    - Serves as a bridge for code exchange for latest and greatest commits between Askey and customers.
+    - Sandbox quality, bare metal builder builder machine not buildable,
+    - Builder's Docker build is in work in progress state (contact: Angus at Taipei)
+    - CT with sync code change to it in a 1~2 days frequency. (contact: Ethan/Gavin at CT)
+    - Customer code will sync to it periodically.(Contact Xin/Vic at AIC)
+
+  * CT https//10.8.10.38:8443, only accessible via WJ VPN instead of company VPN.
+2. This document only describes how to clone purtwd project to a local Linux machine. As for the building part, that belongs to a "build-taipei-purtwd-git-repo-cookbook.txt"
+
+Caveats
+=======
+  * Cloning from Taipei repo needs to go through SOP (desribed below) to accompolish the objective.
+  * Git cloning from CT repo is not possible outside of WJ VPN scope.
+  * Git cloning from Taipei repo:
+    - https transport will fail due to protocol buffer and timing issue. No engineering effort is planned to throw in to make it work.
+    - ssh transport is the only support transport. It needs some modification in a remote VPN access environment. Please see SOP for detail.
+  * CT repo has extra submodule build cache repo for build speed consideration.
+
+SOP for Taipei Repo Cloning
+===========================
+ssh parameters setting
+----------------------
+People who access VPN from remote Linux machine (e.g. Ubuntu VM or baremetal) need to have the following git config due to VPN bandwidth and resilience constraints:
+
+git config --global core.compression 0
+git config --global core.sshCommand \
+"ssh -o Compression=no \
+     -o TCPKeepAlive=yes \
+     -o ServerAliveInterval=10 \
+     -o ServerAliveCountMax=30 \
+     -o ConnectTimeout=60"
+
+ssh public key setting
+----------------------
+ssh public key needs to be present at the bitbucket.
+
+VPN prepartion
+--------------
+Users need to install a Ubuntu debian package linux_f5vpn.x86_64.deb to get VPN access to company private network if working from remote site. 
+dpkg sudo dpkg -i linux_f5vpn.x86_64.deb
+
+Debian package can be found at askeycloud:
+https://askeycloud.askey.com/owncloud/index.php/s/Dwv1weUun6fPFY4
+
+
+Cloneing steps
+--------------
+[First Step: top layer (Appendix 1: clone_taipei_git.sh)]
+1. git clone ssh://git@bitbucket.askey.com.tw:7999/purtwd/scp-wifi7ask-device.git <local-folder> e.g. foo
+
+
+2. You can observe .gitmodules under foo/:
+Prinstine .gitmodules content
+=============================
+[submodule "openwrt"]
+        path = openwrt
+        url = ../scp-wifi7ask-openwrt
+[submodule "feeds/scp_custom"]
+        path = feeds/scp_custom
+        url = ../scp-wifi7chtr-feed
+[submodule "feeds/cujo"]
+        path = feeds/cujo
+        url = ../../scpcom/packages/charter-cujo-stack
+[submodule "feeds/oem_pkgs"]
+        path = feeds/oem_pkgs
+        url = ../scp-oem-packages/askey
+====================================================================
+
+[Second step: clone each module one by one. (Appendix 2: clone_submodules.sh)]
+1. Modify submodule feeds/cujo's url path in foo/.gitmodules with the following line:
+   url = ssh://git@bitbucket.askey.com.tw:7999/pggrtwd/cco-wifi6e-cujo.git
+
+2.  Modify submodule feeds/feeds/oem_pkgs's url path in foo/.gitmodules with the following line:
+   url = ../askey
+
+Transformed content of .gitmodules
+==================================
+[submodule "openwrt"]
+        path = openwrt
+        url = ../scp-wifi7ask-openwrt
+[submodule "feeds/scp_custom"]
+        path = feeds/scp_custom
+        url = ../scp-wifi7chtr-feed
+[submodule "feeds/cujo"]
+        path = feeds/cujo
+        url = ssh://git@10.1.6.85:7999/pggrtwd/cco-wifi6e-cujo.git
+[submodule "feeds/oem_pkgs"]
+        path = feeds/oem_pkgs
+        url = ../askey
+
+3. Do the module sync: git submodule sync --recursive
+
+4. For each module in the .gitmodules, do the following
+   
+   git submodule deinit -f <submodule-path>
+   rm -rf <submodule-path>
+   rm -rf .git/modules/<submodule-path>
+   git submodule update --init --remote --recursive <submodule-path>
+
+   clone_submoudles.sh can perform steps 1-4. However due to the volatile 
+   nature of the ecosystem as of 11/29/2025, you can modify the 
+   clone_submoudles.sh to focus on one submodule after partial failures.
+====================================================================
+[3rd Step  --- Coss customization]
+   1. go to feeds/scp/feed/coss/Makefile, look for CP_COSS_VERSION value, as of 
+      11/29/2025, it is version/5.4.0
+   2. git clone ssh://git@bitbucket.askey.com.tw:7999/purtwd/coss-package.git coss-package-test
+   3. cd coss-package-test
+   4. git checkout version retrieved from 1. (e.g. version/5.4.0)
+   5. git submodule update --init --recursive
+   For step 1-5, clone_coss_submodule.sh can perform the task.
+====================================================================
+
+Appendix 1:
+   Time budget
+
+   Below is time and space calculated at Denver practice. 
+   Time                                 Space
+   ==========================           ===== 
+   At Denver
+   Sun Nov 16 05:32:34 PM PST 2025:Cloning top layer to work1...
+   Sun Nov 16 08:06:00 PM PST 2025:Cloning top layer to work1 done
+   Duration: 1 hour 45 minutes         6.2G
+
+   Sun Nov 16 08:15:07 PM PST 2025:Cloning openwrt
+   Sun Nov 16 11:07:52 PM PST 2025:Cloning openwrt done
+   Duration: 2 hour 52 minutes         9.2G
+
+   Sun Nov 16 11:07:55 PM PST 2025 
+   Sun Nov 16 11:08:16 PM PST 2025:Cloning feeds/scp_custom done
+   Duration: 1 minute 21 seconds       1.4M
+   
+   Sun Nov 16 11:08:16 PM PST 2025:Cloning feeds/cujo ...
+   Sun Nov 16 11:17:15 PM PST 2025:Cloning feeds/cujo done
+   Duration: 9 minutes                 11M
+
+   Mon Nov 17 05:10:00 AM PST 2025:Cloning feeds/oem_pkgs ...
+   Mon Nov 17 05:16:37 AM PST 2025:Cloning feeds/oem_pkgs done
+   Duration: 6 minutes 37 seconds      21M
+
+Appendix 2: clone_taipei_git.sh
+#!/bin/bash -f 
+
+GITMODULES=".gitmodules"
+TMP_FILE="/tmp/.gitmodules.$$"
+
+set -Eeuox pipefail
+
+trap 'err_handler $? $LINENO' ERR
+
+err_handler() {
+    local exit_code=$1
+    local line_no=$2
+    echo "ERROR: Command failed with exit code $exit_code on line $line_no" >&2
+    exit "$exit_code"
+}
+
+if (( $# != 1 )); then
+    echo "usage: $0 <folder>" >&2
+    exit 1
+fi 
+
+FOLDER=$1
+
+echo "`date`:Cloning top layer to $FOLDER..."
+#git clone ssh://git@bitbucket.askey.com.tw:7999/purtwd/scp-wifi7ask-device.git $FOLDER
+git clone ssh://git@10.1.6.85:7999/purtwd/scp-wifi7ask-device.git $FOLDER
+echo "`date`:Cloning top layer to $FOLDER done"
+
+
+echo "$FOLDER size ..."
+du -sh $FOLDER
+
+Appendix 3 : clone_submodules.sh
+#!/bin/bash -f 
+
+OLD_PATTERN1="\.\./\.\./scpcom/packages/charter-cujo-stack"
+#NEW_PATTERN1="ssh://git@bitbucket.askey.com.tw:7999/pggrtwd/cco-wifi6e-cujo.git"
+NEW_PATTERN1="ssh://git@10.1.6.85:7999/pggrtwd/cco-wifi6e-cujo.git"
+OLD_PATTERN2="\.\./scp-oem-packages/askey"
+NEW_PATTERN2="../askey"
+
+
+GITMODULES=".gitmodules"
+
+set -Eeuox pipefail
+
+trap 'err_handler $? $LINENO' ERR
+
+err_handler() {
+    local exit_code=$1
+    local line_no=$2
+    echo "ERROR: Command failed with exit code $exit_code on line $line_no" >&2
+    exit "$exit_code"
+}
+
+if (( $# != 1 )); then
+    echo "usage: $0 <folder>" >&2
+    exit 1
+fi 
+
+FOLDER=$1
+cd $FOLDER
+
+sed -i "s?${OLD_PATTERN1}?${NEW_PATTERN1}?" $GITMODULES
+sed -i "s?${OLD_PATTERN2}?${NEW_PATTERN2}?" $GITMODULES
+
+echo "Modifying $GITMODULES done"
+git submodule sync --recursive
+
+echo "`date`:Cloning submodules ..."
+#for subm in openwrt feeds/scp_custom feeds/cujo feeds/oem_pkgs; do \
+for subm in feeds/cujo; do \
+    echo  "    `date`:Cloning $subm ..."
+    git submodule deinit -f $subm
+    rm -fr $subm
+    rm -fr .git/modules/$subm
+    git submodule update --init --remote --recursive $subm
+    echo  "     `date`:Cloning $subm done"
+    echo "    $subm size ..."
+    du -sh $subm
+done
+
+echo "`date`:Clone submodules done"
+
+echo "$0 $* done"
+
+Appendix 4: clone_coss_submodule.sh 
+#!/bin/bash -f 
+
+set -Eeuox pipefail
+
+trap 'err_handler $? $LINENO' ERR
+
+err_handler() {
+    local exit_code=$1
+    local line_no=$2
+    echo "ERROR: Command failed with exit code $exit_code on line $line_no" >&2
+    exit "$exit_code"
+}
+
+if (( $# != 1 )); then
+    echo "usage: $0 <folder>" >&2
+    exit 1
+fi 
+
+FOLDER=$1
+COSS_GIT="ssh://git@10.1.6.85:7999/purtwd/coss-package.git"
+COSS_PATH=$FOLDER/feeds/scp/feed/coss 
+cd $COSS_PATH
+
+coss_version=$(grep "SCP_COSS_VERSION ?=" Makefile | awk '{ print $3 }')
+git clone $COSS_GIT  coss-package-test
+if [ ! -d coss-package-test ]; then
+    echo "error: coss-package-test does not exist, cannot checkout $coss_version"
+    exit 1
+fi
+
+cd coss-package-test
+git checkout $coss_version
+git submodule update --init --recursive

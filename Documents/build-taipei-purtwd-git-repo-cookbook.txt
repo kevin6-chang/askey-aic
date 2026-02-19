@@ -1,0 +1,107 @@
+Original Author
+===============
+Kevin(Chingwei) Chang
+
+Version
+=======
+1.0
+
+Revison History
+================
+1.0 Initial version by Kevin + Ethan + Gavin debugging brainstorming result
+
+Summary
+=======
+This document describes SOP for image building for project hosted at https://bitbucket.askey.com.tw:8443/projects/PURTWD. Example is provided in CBU format.
+
+This document is a follow-up for "clone-taipei-purtwd-git-repo-cookbook.txt"
+
+Document Circulation Scope
+==========================
+Internal only
+
+
+Target Readers
+==============
+Engineers who do not have access to customer's gitlab might use this cookbook to make a local image for lab usage. 
+
+SOP for Taipei Repo Building
+============================
+ssh parameters setting
+----------------------
+People who access VPN from remote Linux machine (Ubuntu VM or baremetal) need to have the following git config due to VPN bandwidth and VM speed constraints (San Jose is the reference site)
+commands: 
+git config --global core.compression 0
+git config --global core.sshCommand \
+"ssh -o Compression=no \
+     -o TCPKeepAlive=yes \
+     -o ServerAliveInterval=10 \
+     -o ServerAliveCountMax=30 \
+     -o ConnectTimeout=60"
+
+
+[Prerequisite]
+ubuntu-image:18.04 container has abundant preinstalled build tools which save time as well as not to interfere in underneath H/W.  You can find it at askeycloud:
+
+https://askeycloud.askey.com/owncloud/index.php/s/nWvULllmtm6R0cd
+It's chopped to 6 files a~f.
+
+Download them and do the following:
+cat ubuntu-image_18.04-docker.tar.xz.* | xz -dc > ubuntu-image_18.04-docker.tar
+docker load –i ubuntu-image_18.04-docker.tar
+
+Note: 
+It's a 22G OCI image. Users need to prepare a disk to serve docker workspace with at least 30G free space to be safe.
+
+[Build steps]
+1. go to workspace where git clone is performed, mkdir -p build
+2. copy run_docker.sh (Appendix 1) build/, chmod +x build/run_dockers.sh
+3. copy the tarball qsdk_dl.tar from askeycloud: https://askeycloud.askey.com/owncloud/index.php/s/uEcT5VNJtvhELUP to openwrt/sdk/qsdk/dl/
+   tar xf qsdk_dl.tar
+4. (In container)
+   To steer COSS and ODHCP6C, two constant artifact clonings: 
+   export COSS_SOURCE_REPO_OVERRIDE=ssh://git@10.1.6.85:7999/purtwd/coss-package.git
+   export DHCP6C_SOURCE_REPO_OVERRIDE=ssh://git@10.1.6.85:7999/purtwd/odhcp6c.git
+
+5. (In container)
+   For quick build:
+   make SCP_PROFILE=cbe1v1k SCP_NJOB=8 V=99
+   For debug:
+   make SCP_PROFILE=cbe1v1k SCP_NJOB=1 V=99
+
+Appendix 1: run_docker.sh
+#!/bin/bash
+
+cd $(dirname $0)/../
+export ASKEY_TOP_DIR=$(pwd)
+
+docker_cmd="/bin/bash"
+for arg in $*
+do
+case $arg in
+	build) docker_cmd="/workspace-askey/build/build.sh";;
+	sh) docker_cmd="/bin/bash";;
+esac
+done
+
+[ -e ${ASKEY_TOP_DIR}/build/tmp ] || mkdir -p ${ASKEY_TOP_DIR}/build/tmp
+
+docker run \
+   --security-opt apparmor=unconfined \
+   --security-opt seccomp=unconfined \
+   --security-opt systempaths=unconfined \
+   --rm \
+   --privileged \
+   -h ${USER} \
+   -u $(id -u):$(id -g) \
+   -it \
+   -v ${ASKEY_TOP_DIR}:/workspace \
+   -v ${HOME}:${HOME} \
+   -v ${ASKEY_TOP_DIR}/build/tmp:/tmp \
+   -v ${ASKEY_TOP_DIR}/build/tmp:/tmp \
+   -v /etc/passwd:/etc/passwd:ro \
+   -v /etc/group:/etc/group:ro \
+   --name ${USER}-`date +%s` \
+   --hostname $(basename `pwd`|sed 's/\./_/g') \
+   ubuntu-image:18.04 \
+   ${docker_cmd}

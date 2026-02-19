@@ -1,0 +1,1 @@
+git config --global core.sshCommand "ssh -o Compression=yes -o TCPKeepAlive=yes -o ServerAliveInterval=30"
