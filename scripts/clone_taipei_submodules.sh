@@ -1,4 +1,5 @@
 #!/bin/bash -f 
+# This script is prepared for clone CBU submodules from the Taipei git
 
 OLD_PATTERN1="\.\./\.\./scpcom/packages/charter-cujo-stack"
 #NEW_PATTERN1="ssh://git@bitbucket.askey.com.tw:7999/pggrtwd/cco-wifi6e-cujo.git"
