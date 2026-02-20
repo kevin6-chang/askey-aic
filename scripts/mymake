@@ -1,1 +1,8 @@
-make SCP_PROFILE=cbe1v1k SCP_NJOB=8 V=99
+#!/bin/bash 
+
+jobs="8"
+if [ $# -gt 0 ]; then
+    jobs=$1
+fi
+echo "Using jobs $jobs..."
+echo make SCP_PROFILE=cbe1v1k SCP_NJOB=$jobs V=99
