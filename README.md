@@ -1,7 +1,7 @@
 askey-aic Repo README
 =====================
 
-This repository is created to host the AIC software for tasks and projects in the following categories:
+This repository is created for hosting the AIC software for tasks and projects in the following categories:
 
 - CBU single-module bottom-up builds
 - CBU unit test sandbox
