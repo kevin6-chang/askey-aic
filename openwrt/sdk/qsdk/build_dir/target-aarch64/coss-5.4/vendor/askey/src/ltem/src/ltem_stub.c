@@ -24,6 +24,21 @@ void osa_assert_dump(
     while (1); 
 }
 
+const char *
+osn_lte_esim_get_profiles(void)
+{
+    return NULL;
+}
+
+
+void
+osn_lte_dump_modem_info(void)
+{
+    return;
+}
+
+
+
 int osn_lte_esim_download_profile(const char *activation_code)
 {
     return 0;
