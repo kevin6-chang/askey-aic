@@ -1,0 +1,10 @@
+quick_make_ut_stubby.sh \
+/home/askey123/workspace-charter/scp-wifi7ask-device/openwrt/sdk/qsdk/build_dir/target-aarch64/coss-5.4/vendor/askey/src/ltem/src/ltem_main.c \
+/home/askey123/workspace-charter/scp-wifi7ask-device/openwrt/sdk/qsdk/build_dir/target-aarch64/coss-5.4/vendor/askey/src/ltem/src/ltem_esim.c \
+/home/askey123/workspace-charter/scp-wifi7ask-device/openwrt/sdk/qsdk/build_dir/target-aarch64/coss-5.4/vendor/askey/src/ltem/src/ltem_event.c \
+/home/askey123/workspace-charter/scp-wifi7ask-device/openwrt/sdk/qsdk/build_dir/target-aarch64/coss-5.4/vendor/askey/src/ltem/src/ltem_mqtt.c \
+/home/askey123/workspace-charter/scp-wifi7ask-device/openwrt/sdk/qsdk/build_dir/target-aarch64/coss-5.4/vendor/askey/src/ltem/src/ltem_ovsdb.c \
+/home/askey123/workspace-charter/scp-wifi7ask-device/openwrt/sdk/qsdk/build_dir/target-aarch64/coss-5.4/vendor/askey/src/ltem/src/ltem_res.c \
+/home/askey123/workspace-charter/scp-wifi7ask-device/openwrt/sdk/qsdk/build_dir/target-aarch64/coss-5.4/vendor/askey/src/ltem/src/ltem_route.c \
+/home/askey123/workspace-charter/scp-wifi7ask-device/openwrt/sdk/qsdk/build_dir/target-aarch64/coss-5.4/vendor/askey/src/ltem/src/ltem_state_mgr.c \
+/home/askey123/workspace-charter/scp-wifi7ask-device/openwrt/sdk/qsdk/build_dir/target-aarch64/coss-5.4/vendor/askey/src/ltem/src/ltem_stub.c > X 2>&1
