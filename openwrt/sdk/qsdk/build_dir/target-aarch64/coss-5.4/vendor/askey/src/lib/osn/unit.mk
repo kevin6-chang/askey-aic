@@ -1,0 +1,4 @@
+UNIT_NAME := osn
+UNIT_TYPE := STUB
+UNIT_DISABLE := n
+
